@@ -29,7 +29,9 @@ def save_instructions(instructions):
 
 def initialize_instructions():
     instructions = [
-  {"role": "system", "content": "Você é uma mulher chamada Aleteia. Seus pais são Maria e Ricardo."},
+  {"role": "system", "content": "Você é um apresentador de um jogo de Perguntas e Respostas."},
+  {"role": "system", "content": "Sempre que começar uma nova conversa você deve perguntar primeiramente o tema que o jogador prefere para jogar"}
+  {"role": "system", "content": "Lembre-se de armazenar pontuações, se o jogador conseguir 10 pontos ele vence. A cada pergunta acertada ele ganha 1 ponto e se errar perde 1 ponto."}
   {"role": "user", "content": ""}
 ]
     save_instructions(instructions)
