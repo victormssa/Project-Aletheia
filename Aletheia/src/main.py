@@ -1,72 +1,54 @@
-import playsound
-from gtts import gTTS
-import openai
+import requests
 import json
 
-api_key = "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"
-lang = 'pt-BR'
-openai.api_key = api_key
+# Substitua 'YOUR_API_KEY' pela sua chave de API
+API_KEY = 'YOUR_API_KEY'
+BASE_URL = 'https://api.coze.com/v1/messages'
 
-def play_audio(text):
-    speech = gTTS(text=text, lang=lang, slow=False)
-    speech.save("Aletheia/src/assets/aud/audio.mp3")
-    playsound.playsound("Aletheia/src/assets/aud/audio.mp3")
+# Configuração dos cabeçalhos da requisição
+headers = {
+    'Authorization': f'Bearer {API_KEY}',
+    'Content-Type': 'application/json'
+}
 
-def handle_recognized_text(text):
-    with open('/home/victoralves/Documentos/GitHub/Project-Aletheia/Aletheia/src/memory/memory.json', 'r') as file:
-        instructions = json.load(file)
+def send_message(message):
+    """
+    Envia uma mensagem para o bot e retorna a resposta.
 
-    instructions[-1]["content"] = text
+    Args:
+        message (str): A mensagem a ser enviada para o bot.
 
-    completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=instructions)
-    response_text = completion.choices[0].message.content
-    print(response_text)
-    play_audio(response_text)
+    Returns:
+        dict: A resposta do bot em formato JSON.
+    """
+    data = {
+        'message': message
+    }
+    try:
+        response = requests.post(BASE_URL, headers=headers, data=json.dumps(data))
+        response.raise_for_status()  # Levanta uma exceção para códigos de status HTTP 4xx/5xx
+        return response.json()
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Erro HTTP: {http_err}")
+    except Exception as err:
+        print(f"Erro: {err}")
+    return None
 
-def save_instructions(instructions):
-    with open('/home/victoralves/Documentos/GitHub/Project-Aletheia/Aletheia/src/memory/memory.json', 'w') as file:
-        json.dump(instructions, file)
+def main():
+    """
+    Função principal que gerencia o loop de interação com o usuário.
+    """
+    print("Bem-vindo ao chat com o bot Coze! Digite 'sair' para encerrar.")
+    while True:
+        user_message = input("Você: ")
+        if user_message.lower() == 'sair':
+            print("Encerrando o chat. Até mais!")
+            break
+        bot_response = send_message(user_message)
+        if bot_response:
+            print("Bot:", bot_response.get('response', 'Sem resposta'))
+        else:
+            print("Não foi possível obter uma resposta do bot.")
 
-def initialize_instructions():
-    instructions = [
-  {"role": "system", "content": "Você é um apresentador de um jogo de Perguntas e Respostas."},
-  {"role": "system", "content": "Sempre que começar uma nova conversa você deve perguntar primeiramente o tema que o jogador prefere para jogar"},
-  {"role": "system", "content": "Lembre-se de armazenar pontuações, se o jogador conseguir 10 pontos ele vence. A cada pergunta acertada ele ganha 1 ponto e se errar perde 1 ponto."},
-  {"role": "user", "content": ""}
-]
-    save_instructions(instructions)
-
-def append_user_message(message):
-    with open('/home/victoralves/Documentos/GitHub/Project-Aletheia/Aletheia/src/memory/memory.json', 'r') as file:
-        instructions = json.load(file)
-
-    instructions.append({"role": "user", "content": message})
-    save_instructions(instructions)
-
-def append_system_message(message):
-    with open('/home/victoralves/Documentos/GitHub/Project-Aletheia/Aletheia/src/memory/memory.json', 'r') as file:
-        instructions = json.load(file)
-
-    instructions.append({"role": "system", "content": message})
-    save_instructions(instructions)
-
-def clear_user_history():
-    with open('/home/victoralves/Documentos/GitHub/Project-Aletheia/Aletheia/src/memory/memory.json', 'r') as file:
-        instructions = json.load(file)
-
-    instructions = instructions[:1]
-    save_instructions(instructions)
-
-initialize_instructions()
-
-while True:
-    user_input = input("Digite sua pergunta: ")
-    if "encerrar" in user_input.lower() or "parar" in user_input.lower():
-        append_user_message(user_input)
-        break
-    elif "limpar histórico" in user_input.lower():
-        clear_user_history()
-        initialize_instructions()
-    else:
-        append_user_message(user_input)
-        handle_recognized_text(user_input)
+if __name__ == "__main__":
+    main()
