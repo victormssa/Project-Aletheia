@@ -1,0 +1,6 @@
+
+*.txt
+
+Aletheia/client/node_modules/
+
+Aletheia/client/package-lock.json
